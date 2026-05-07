@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vyomaris</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    :root {
+      --white: #ffffff;
+      --off: rgba(255,255,255,0.75);
+      --dim: rgba(255,255,255,0.45);
+    }
+
+    html, body {
+      width:100%; height:100%;
+      background:#000;
+      color:#fff;
+      font-family:'Inter', sans-serif;
+      overflow:hidden;
+    }
+
+    /* ========== SCROLL CONTAINER ========== */
+    #sc {
+      width:100%;
+      height:100dvh;
+      overflow-y:scroll;
+      overflow-x:hidden;
+      scroll-snap-type:y mandatory;
+      scroll-behavior:smooth;
+      -webkit-overflow-scrolling:touch;
+    }
+    #sc::-webkit-scrollbar { display:none; }
+
+    /* ========== SLIDE ========== */
+    .slide {
+      position:relative;
+      width:100%;
+      height:100dvh;
+      scroll-snap-align:start;
+      scroll-snap-stop:always;
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-end;
+      overflow:hidden;
+    }
+
+    .slide-bg {
+      position:absolute;
+      inset:0;
+      background-size:cover;
+      background-position:center;
+      background-repeat:no-repeat;
+      transform:scale(1.0);
+      transition:transform 9s ease;
+    }
+    .slide.active .slide-bg { transform:scale(1.05); }
+
+    .slide-overlay {
+      position:absolute;
+      inset:0;
+      background:linear-gradient(
+        to bottom,
+        rgba(0,0,0,0.0) 0%,
+        rgba(0,0,0,0.0) 38%,
+        rgba(0,0,0,0.5) 68%,
+        rgba(0,0,0,0.82) 100%
+      );
+    }
+
+    /* ========== CONTENT ========== */
+    .sc {
+      position:relative;
+      z-index:2;
+      padding:0 52px 64px;
+      max-width:680px;
+      opacity:0;
+      transform:translateY(28px);
+      transition:opacity 0.9s cubic-bezier(.22,1,.36,1), transform 0.9s cubic-bezier(.22,1,.36,1);
+    }
+    .slide.active .sc { opacity:1; transform:translateY(0); }
+
+    .eyebrow {
+      font-family:'Inter', sans-serif;
+      font-weight:200;
+      font-size:clamp(0.6rem,1.1vw,0.75rem);
+      letter-spacing:0.3em;
+      text-transform:uppercase;
+      color:rgba(255,255,255,0.45);
+      margin-bottom:10px;
+    }
+
+    .slide-title {
+      font-family:'Rajdhani', sans-serif;
+      font-weight:700;
+      font-size:clamp(3rem,8.5vw,8rem);
+      line-height:0.9;
+      letter-spacing:0.02em;
+      text-transform:uppercase;
+      margin-bottom:18px;
+    }
+
+    .slide-desc {
+      font-family:'Inter', sans-serif;
+      font-weight:200;
+      font-size:clamp(0.76rem,1.3vw,0.9rem);
+      line-height:1.8;
+      color:rgba(255,255,255,0.7);
+      max-width:420px;
+      margin-bottom:28px;
+    }
+
+    .brow {
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-family:'Inter', sans-serif;
+      font-weight:300;
+      font-size:0.6rem;
+      letter-spacing:0.25em;
+      text-transform:uppercase;
+      color:rgba(255,255,255,0.4);
+      margin-bottom:10px;
+    }
+    .brow-dot {
+      width:5px; height:5px;
+      border-radius:50%;
+      background:#5cc8ff;
+      animation:bp 2s infinite;
+    }
+    .brow-dot.or { background:#ff7040; }
+    .brow-dot.wh { background:rgba(255,255,255,0.4); animation:none; }
+    @keyframes bp { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
+
+    /* ========== BUTTONS ========== */
+    .btns { display:flex; gap:14px; flex-wrap:wrap; }
+
+    .btn {
+      font-family:'Inter', sans-serif;
+      font-weight:400;
+      font-size:0.7rem;
+      letter-spacing:0.16em;
+      text-transform:uppercase;
+      text-decoration:none;
+      padding:13px 32px;
+      cursor:pointer;
+      border:none;
+      transition:background 0.2s, opacity 0.2s;
+      white-space:nowrap;
+      display:inline-block;
+    }
+    .btn-s { background:rgba(255,255,255,0.92); color:#000; }
+    .btn-s:hover { background:#fff; }
+    .btn-o {
+      background:rgba(255,255,255,0.1);
+      color:#fff;
+      border:1px solid rgba(255,255,255,0.35);
+      backdrop-filter:blur(6px);
+    }
+    .btn-o:hover { background:rgba(255,255,255,0.18); }
+
+    /* ========== NAV ========== */
+    nav {
+      position:fixed;
+      top:0; left:0; right:0;
+      height:60px;
+      z-index:100;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 28px;
+      transition:background 0.5s;
+    }
+    nav.bg { background:rgba(0,0,0,0.78); backdrop-filter:blur(16px); }
+
+    .logo {
+      font-family:'Rajdhani', sans-serif;
+      font-weight:700;
+      font-size:1.38rem;
+      letter-spacing:0.32em;
+      text-transform:uppercase;
+      color:#fff;
+      text-decoration:none;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      cursor:pointer;
+    }
+    .logo svg { width:22px; height:22px; flex-shrink:0; }
+
+    .nav-links {
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      display:flex;
+      gap:32px;
+      list-style:none;
+    }
+    .nav-links a {
+      font-family:'Inter', sans-serif;
+      font-weight:300;
+      font-size:0.7rem;
+      letter-spacing:0.15em;
+      text-transform:uppercase;
+      color:rgba(255,255,255,0.55);
+      text-decoration:none;
+      transition:color 0.2s;
+    }
+    .nav-links a:hover { color:#fff; }
+
+    .ham {
+      display:none;
+      flex-direction:column;
+      gap:5px;
+      cursor:pointer;
+      padding:8px;
+      background:none;
+      border:none;
+    }
+    .ham span { display:block; width:22px; height:1px; background:#fff; }
+
+    /* ========== DOTS ========== */
+    #dots {
+      position:fixed;
+      right:18px; top:50%;
+      transform:translateY(-50%);
+      z-index:99;
+      display:flex;
+      flex-direction:column;
+      gap:9px;
+    }
+    .dot {
+      width:4px; height:4px;
+      border-radius:50%;
+      background:rgba(255,255,255,0.28);
+      cursor:pointer;
+      transition:background 0.3s, transform 0.3s;
+    }
+    .dot.active { background:#fff; transform:scale(1.7); }
+
+    /* ========== SCROLL HINT ========== */
+    .sh {
+      position:absolute;
+      bottom:24px; right:50px;
+      z-index:3;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:5px;
+      opacity:0.45;
+      cursor:pointer;
+    }
+    .sh-line {
+      width:1px; height:38px;
+      background:linear-gradient(to bottom, rgba(255,255,255,0.05), #fff);
+      animation:sp 2s ease-in-out infinite;
+    }
+    @keyframes sp { 0%,100%{opacity:0.3;} 50%{opacity:1;} }
+    .sh span {
+      font-family:'Inter', sans-serif;
+      font-size:0.5rem;
+      letter-spacing:0.3em;
+      text-transform:uppercase;
+      color:rgba(255,255,255,0.5);
+    }
+
+    /* ========== SLIDE NUMBER ========== */
+    .sn {
+      position:absolute;
+      top:78px; right:50px;
+      z-index:2;
+      font-family:'Inter', sans-serif;
+      font-weight:100;
+      font-size:5.5rem;
+      color:rgba(255,255,255,0.04);
+      line-height:1;
+      user-select:none;
+      letter-spacing:-0.03em;
+    }
+
+    /* ========== STATS ========== */
+    #stats {
+      scroll-snap-align:start;
+      background:#080810;
+      border-top:1px solid rgba(255,255,255,0.06);
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      padding:0 52px;
+      min-height:170px;
+      align-items:center;
+    }
+    .stat {
+      padding:36px 0 36px 22px;
+      border-right:1px solid rgba(255,255,255,0.06);
+    }
+    .stat:first-child { padding-left:0; }
+    .stat:last-child { border-right:none; }
+    .stn {
+      font-family:'Rajdhani', sans-serif;
+      font-size:2.6rem;
+      font-weight:700;
+      color:#fff;
+      line-height:1;
+    }
+    .stn em { color:#5cc8ff; font-style:normal; }
+    .stl {
+      font-family:'Inter', sans-serif;
+      font-weight:200;
+      font-size:0.58rem;
+      letter-spacing:0.22em;
+      text-transform:uppercase;
+      color:rgba(255,255,255,0.3);
+      margin-top:8px;
+    }
+
+    /* ========== ABOUT ========== */
+    #abt {
+      scroll-snap-align:start;
+      scroll-snap-stop:always;
+      height:100dvh;
+      background:#04040a;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      overflow:hidden;
+    }
+    .abt-l {
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      padding:0 64px;
+      border-right:1px solid rgba(255,255,255,0.05);
+    }
+    .abt-tag {
+      font-family:'Inter', sans-serif;
+      font-weight:200;
+      font-size:0.6rem;
+      letter-spacing:0.35em;
+      text-transform:uppercase;
+      color:#5cc8ff;
+      margin-bottom:20px;
+    }
+    .abt-l h2 {
+      font-family:'Rajdhani', sans-serif;
+      font-weight:700;
+      font-size:clamp(2rem,3.8vw,3.5rem);
+      text-transform:uppercase;
+      letter-spacing:0.04em;
+      line-height:1;
+      margin-bottom:22px;
+    }
+    .abt-l p {
+      font-family:'Inter', sans-serif;
+      font-weight:200;
+      font-size:0.86rem;
+      line-height:1.9;
+      color:rgba(255,255,255,0.48);
+      margin-bottom:13px;
+    }
+    .abt-r {
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      padding:0 64px;
+    }
+    .feat {
+      padding:22px 0;
+      border-bottom:1px solid rgba(255,255,255,0.05);
+      display:grid;
+      grid-template-columns:28px 1fr;
+      gap:18px;
+    }
+    .fn {
+      font-family:'Rajdhani', sans-serif;
+      font-weight:600;
+      font-size:0.65rem;
+      letter-spacing:0.15em;
+      color:#5cc8ff;
+      padding-top:2px;
+    }
+    .ft { font-family:'Rajdhani', sans-serif; font-weight:600; font-size:0.86rem; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:5px; }
+    .fd { font-family:'Inter', sans-serif; font-weight:200; font-size:0.74rem; line-height:1.65; color:rgba(255,255,255,0.38); }
+
+    /* ========== FOOTER ========== */
+    footer {
+      scroll-snap-align:start;
+      background:#000;
+      border-top:1px solid rgba(255,255,255,0.05);
+      padding:52px 52px 32px;
+    }
+    .fg {
+      display:grid;
+      grid-template-columns:2fr 1fr 1fr 1fr;
+      gap:40px;
+      padding-bottom:40px;
+      border-bottom:1px solid rgba(255,255,255,0.05);
+      margin-bottom:24px;
+    }
+    .fb-name { font-family:'Rajdhani', sans-serif; font-weight:700; font-size:1.1rem; letter-spacing:0.3em; text-transform:uppercase; margin-bottom:12px; }
+    .fb-desc { font-family:'Inter', sans-serif; font-weight:200; font-size:0.74rem; line-height:1.7; color:rgba(255,255,255,0.25); max-width:230px; }
+    .fch { font-family:'Inter', sans-serif; font-weight:400; font-size:0.62rem; letter-spacing:0.2em; text-transform:uppercase; color:rgba(255,255,255,0.4); margin-bottom:14px; }
+    .fc ul { list-style:none; }
+    .fc li { margin-bottom:9px; }
+    .fc a { font-family:'Inter', sans-serif; font-weight:200; font-size:0.74rem; color:rgba(255,255,255,0.25); text-decoration:none; transition:color 0.2s; }
+    .fc a:hover { color:rgba(255,255,255,0.75); }
+    .fb2 { display:flex; justify-content:space-between; align-items:center; }
+    .fb2 p { font-family:'Inter', sans-serif; font-weight:200; font-size:0.62rem; letter-spacing:0.1em; color:rgba(255,255,255,0.16); }
+
+    /* ========== MOBILE MENU ========== */
+    #mm {
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.96);
+      backdrop-filter:blur(20px);
+      z-index:200;
+      display:none;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:32px;
+    }
+    #mm.open { display:flex; }
+    #mm a {
+      font-family:'Rajdhani', sans-serif;
+      font-weight:600;
+      font-size:2rem;
+      letter-spacing:0.15em;
+      text-transform:uppercase;
+      color:rgba(255,255,255,0.75);
+      text-decoration:none;
+      transition:color 0.2s;
+    }
+    #mm a:hover { color:#fff; }
+    #mm-close {
+      position:absolute;
+      top:20px; right:26px;
+      font-size:1.4rem;
+      color:#fff;
+      cursor:pointer;
+      background:none;
+      border:none;
+    }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width:860px) {
+      .nav-links { display:none; }
+      .ham { display:flex; }
+      .sc { padding:0 22px 52px; }
+      .sh { right:22px; }
+      .sn { display:none; }
+      #stats { grid-template-columns:1fr 1fr; padding:0 22px; }
+      .stat { padding:26px 0 26px 16px; }
+      .stat:nth-child(2) { border-right:none; }
+      #abt { grid-template-columns:1fr; }
+      .abt-l { padding:72px 24px 48px; border-right:none; }
+      .abt-r { display:none; }
+      footer { padding:36px 22px 24px; }
+      .fg { grid-template-columns:1fr 1fr; gap:28px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="logo" onclick="goSlide(0)">
+    <svg viewBox="0 0 32 32" fill="none">
+      <path d="M16 3L20.5 13H30L22 19.5L25.5 30L16 23.5L6.5 30L10 19.5L2 13H11.5Z" stroke="white" stroke-width="1.3"/>
+      <circle cx="16" cy="16" r="2.2" fill="white" opacity="0.8"/>
+    </svg>
+    Vyomaris
+  </div>
+  <ul class="nav-links">
+    <li><a href="#" onclick="goSlide(1);return false;">Agni-1</a></li>
+    <li><a href="#" onclick="goSlide(2);return false;">Surya</a></li>
+    <li><a href="#" onclick="goSlide(3);return false;">Chandraveer</a></li>
+    <li><a href="#" onclick="goSlide(4);return false;">Facilities</a></li>
+    <li><a href="#" onclick="goSlide(6);return false;">About</a></li>
+  </ul>
+  <button class="ham" onclick="document.getElementById('mm').classList.add('open')">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- MOBILE MENU -->
+<div id="mm">
+  <button id="mm-close" onclick="document.getElementById('mm').classList.remove('open')">&#x2715;</button>
+  <a href="#" onclick="goSlide(0);document.getElementById('mm').classList.remove('open');return false;">Home</a>
+  <a href="#" onclick="goSlide(1);document.getElementById('mm').classList.remove('open');return false;">Agni-1</a>
+  <a href="#" onclick="goSlide(2);document.getElementById('mm').classList.remove('open');return false;">Surya</a>
+  <a href="#" onclick="goSlide(3);document.getElementById('mm').classList.remove('open');return false;">Chandraveer</a>
+  <a href="#" onclick="goSlide(4);document.getElementById('mm').classList.remove('open');return false;">Facilities</a>
+  <a href="#" onclick="goSlide(6);document.getElementById('mm').classList.remove('open');return false;">About</a>
+</div>
+
+<!-- DOTS -->
+<div id="dots">
+  <div class="dot active" onclick="goSlide(0)"></div>
+  <div class="dot" onclick="goSlide(1)"></div>
+  <div class="dot" onclick="goSlide(2)"></div>
+  <div class="dot" onclick="goSlide(3)"></div>
+  <div class="dot" onclick="goSlide(4)"></div>
+  <div class="dot" onclick="goSlide(5)"></div>
+  <div class="dot" onclick="goSlide(6)"></div>
+</div>
+
+<!-- SCROLL CONTAINER -->
+<div id="sc">
+
+  <!-- SLIDE 0: HERO -->
+  <div class="slide" id="s0">
+    <div class="slide-bg" style="background-image:url('https://images.unsplash.com/photo-1517976487492-5750f3195933?w=1920&q=85');background-position:center 35%;"></div>
+    <div class="slide-overlay"></div>
+    <div class="sc">
+      <div class="brow"><div class="brow-dot"></div>Active Programme &bull; India</div>
+      <div class="eyebrow">Private Aerospace &bull; Launch &bull; Spacecraft</div>
+      <h1 class="slide-title" style="font-size:clamp(4rem,12vw,10rem);">Vyomaris</h1>
+      <p class="slide-desc">Designing, manufacturing, and launching advanced rockets and spacecraft from Indian soil — with the goal of making humanity multiplanetary.</p>
+      <div class="btns">
+        <a href="#" class="btn btn-s" onclick="goSlide(1);return false;">Explore Vehicles</a>
+        <a href="#" class="btn btn-o" onclick="goSlide(6);return false;">Our Story</a>
+      </div>
+    </div>
+    <div class="sh" onclick="goSlide(1)">
+      <div class="sh-line"></div>
+      <span>Scroll</span>
+    </div>
+  </div>
+
+  <!-- SLIDE 1: AGNI-1 -->
+  <div class="slide" id="s1">
+    <div class="slide-bg" style="background-image:url('https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=1920&q=85');background-position:center 25%;"></div>
+    <div class="slide-overlay"></div>
+    <div class="sn">01</div>
+    <div class="sc">
+      <div class="brow"><div class="brow-dot or"></div>In Development</div>
+      <div class="eyebrow">Launch Vehicle &bull; Reusable &bull; Orbital Class</div>
+      <h2 class="slide-title">Agni-1</h2>
+      <p class="slide-desc">India's first fully reusable private orbital rocket. Up to 5,000 kg to LEO with propulsive first-stage landing for rapid reuse and reduced mission cost.</p>
+      <div class="btns">
+        <a href="#" class="btn btn-s">Learn More</a>
+        <a href="#" class="btn btn-o">Watch Test Fires</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2: SURYA -->
+  <div class="slide" id="s2">
+    <div class="slide-bg" style="background-image:url('https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=1920&q=85');background-position:center 50%;"></div>
+    <div class="slide-overlay" style="background:linear-gradient(to bottom,rgba(0,0,0,0) 0%,rgba(0,0,0,0) 30%,rgba(0,2,10,0.55) 65%,rgba(0,2,14,0.88) 100%);"></div>
+    <div class="sn">02</div>
+    <div class="sc">
+      <div class="brow"><div class="brow-dot or"></div>Build Phase</div>
+      <div class="eyebrow">Earth Observation &bull; 24 Satellites &bull; Sub-Meter</div>
+      <h2 class="slide-title">Surya<br/>Constellation</h2>
+      <p class="slide-desc">Real-time, high-resolution Earth imaging for agriculture, disaster response, and national security — Vyomaris's first commercial satellite programme.</p>
+      <div class="btns">
+        <a href="#" class="btn btn-s">Learn More</a>
+        <a href="#" class="btn btn-o">Data Services</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: CHANDRAVEER -->
+  <div class="slide" id="s3">
+    <div class="slide-bg" style="background-image:url('https://images.unsplash.com/photo-1532693322450-2cb5c511067d?w=1920&q=85');background-position:center 45%;"></div>
+    <div class="slide-overlay" style="background:linear-gradient(to bottom,rgba(0,0,0,0.08) 0%,rgba(0,0,0,0) 30%,rgba(0,0,0,0.6) 65%,rgba(0,0,0,0.92) 100%);"></div>
+    <div class="sn">03</div>
+    <div class="sc">
+      <div class="brow"><div class="brow-dot wh"></div>Concept Phase &bull; 2035</div>
+      <div class="eyebrow">Lunar Programme &bull; South Pole &bull; Cislunar Relay</div>
+      <h2 class="slide-title">Chandraveer<br/>Programme</h2>
+      <p class="slide-desc">Precision landing at the lunar south pole, a permanent cislunar communication relay, and the foundation for sustained human presence beyond Earth.</p>
+      <div class="btns">
+        <a href="#" class="btn btn-s">Learn More</a>
+        <a href="#" class="btn btn-o">Read Whitepaper</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: LAUNCH COMPLEX -->
+  <div class="slide" id="s4">
+    <div class="slide-bg" style="background-image:url('https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=1920&q=85');background-position:center 55%;"></div>
+    <div class="slide-overlay"></div>
+    <div class="sn">04</div>
+    <div class="sc">
+      <div class="brow"><div class="brow-dot"></div>Groundbreaking 2026</div>
+      <div class="eyebrow">Launch Complex &bull; Sriharikota &bull; Dual Pad</div>
+      <h2 class="slide-title">Vyom<br/>Launch<br/>Complex</h2>
+      <p class="slide-desc">India's most advanced private launch facility — dual pads, integrated mission control, and an on-site rocket manufacturing campus purpose-built for Agni-1.</p>
+      <div class="btns">
+        <a href="#" class="btn btn-s">Learn More</a>
+        <a href="#" class="btn btn-o">View Progress</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div id="stats">
+    <div class="stat">
+      <div class="stn"><em id="c1">0</em></div>
+      <div class="stl">Launches Planned &bull; 2027</div>
+    </div>
+    <div class="stat">
+      <div class="stn"><em id="c2">0</em><span style="font-size:1.4rem;color:rgba(255,255,
